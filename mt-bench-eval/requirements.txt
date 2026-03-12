@@ -1,0 +1,4 @@
+torch>=2.2.0
+transformers>=4.40.0
+accelerate>=0.30.0
+openai>=1.0.0

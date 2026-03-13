@@ -305,6 +305,47 @@ def main():
     with open(os.path.join(output_dir, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
 
+    # Generate charts.json for the UI
+    charts = []
+    if category_avgs:
+        cats = sorted(category_avgs.keys())
+        scores = [category_avgs[c] for c in cats]
+        chart_data = [{
+            "type": "bar",
+            "x": cats,
+            "y": scores,
+            "text": [f"{s:.1f}" for s in scores],
+            "textposition": "outside",
+            "marker": {"color": "#636EFA"},
+        }]
+        shapes = []
+        if overall_avg > 0:
+            shapes.append({
+                "type": "line",
+                "x0": -0.5, "x1": len(cats) - 0.5,
+                "y0": overall_avg, "y1": overall_avg,
+                "line": {"color": "#EF553B", "width": 2, "dash": "dash"},
+            })
+        charts.append({
+            "data": chart_data,
+            "layout": {
+                "title": {"text": f"MT-Bench Category Scores — {model_id}"},
+                "xaxis": {"title": {"text": "Category"}},
+                "yaxis": {"title": {"text": "Score"}, "range": [0, 10]},
+                "shapes": shapes,
+                "annotations": [{
+                    "x": len(cats) - 1, "y": overall_avg,
+                    "text": f"Overall: {overall_avg:.1f}",
+                    "showarrow": False, "yshift": 12,
+                    "font": {"color": "#EF553B"},
+                }] if overall_avg > 0 else [],
+                "margin": {"t": 60, "b": 80},
+            },
+        })
+    if charts:
+        with open(os.path.join(output_dir, "charts.json"), "w") as f:
+            json.dump(charts, f)
+
     # Print results
     print(f"\n{'='*50}")
     print(f"MT-Bench Results: {model_id}")

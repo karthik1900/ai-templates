@@ -300,6 +300,47 @@ def main():
     with open(os.path.join(output_dir, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
 
+    # Generate charts.json for the UI
+    charts = []
+    if agg_metrics:
+        metric_names = list(agg_metrics.keys())
+        metric_values = list(agg_metrics.values())
+        display_names = [n.replace("_avg", "").replace("_", " ").upper() for n in metric_names]
+        charts.append({
+            "data": [{
+                "type": "bar",
+                "x": display_names,
+                "y": metric_values,
+                "text": [f"{v:.4f}" for v in metric_values],
+                "textposition": "outside",
+                "marker": {"color": "#636EFA"},
+            }],
+            "layout": {
+                "title": {"text": f"Average Metrics — {model_id}"},
+                "xaxis": {"title": {"text": "Metric"}},
+                "yaxis": {"title": {"text": "Score"}, "range": [0, 1]},
+                "margin": {"t": 60, "b": 80},
+            },
+        })
+    if has_references and all_rouge:
+        charts.append({
+            "data": [{
+                "type": "histogram",
+                "x": [round(v, 4) for v in all_rouge],
+                "nbinsx": 20,
+                "marker": {"color": "#EF553B"},
+            }],
+            "layout": {
+                "title": {"text": "ROUGE-L Score Distribution"},
+                "xaxis": {"title": {"text": "ROUGE-L"}},
+                "yaxis": {"title": {"text": "Count"}},
+                "margin": {"t": 60, "b": 60},
+            },
+        })
+    if charts:
+        with open(os.path.join(output_dir, "charts.json"), "w") as f:
+            json.dump(charts, f)
+
     print(f"\nResults:")
     for k, v in agg_metrics.items():
         print(f"  {k}: {v}")

@@ -360,6 +360,46 @@ def main():
     with open(os.path.join(output_dir, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
 
+    # Generate charts.json for the UI
+    charts = []
+    if metrics_cb.logs:
+        train_steps = [e["step"] for e in metrics_cb.logs if "loss" in e]
+        train_loss = [e["loss"] for e in metrics_cb.logs if "loss" in e]
+        eval_steps_list = [e["step"] for e in metrics_cb.logs if "eval_loss" in e]
+        eval_loss_list = [e["eval_loss"] for e in metrics_cb.logs if "eval_loss" in e]
+        lr_steps = [e["step"] for e in metrics_cb.logs if "learning_rate" in e]
+        lr_values = [e["learning_rate"] for e in metrics_cb.logs if "learning_rate" in e]
+
+        # Loss chart
+        loss_traces = [{"type": "scatter", "mode": "lines", "x": train_steps, "y": train_loss, "name": "Train Loss", "line": {"color": "#636EFA"}}]
+        if eval_loss_list:
+            loss_traces.append({"type": "scatter", "mode": "lines+markers", "x": eval_steps_list, "y": eval_loss_list, "name": "Eval Loss", "line": {"color": "#EF553B"}})
+        charts.append({
+            "data": loss_traces,
+            "layout": {
+                "title": {"text": "Training & Eval Loss"},
+                "xaxis": {"title": {"text": "Step"}},
+                "yaxis": {"title": {"text": "Loss"}},
+                "margin": {"t": 60, "b": 60},
+            },
+        })
+
+        # Learning rate chart
+        if lr_values:
+            charts.append({
+                "data": [{"type": "scatter", "mode": "lines", "x": lr_steps, "y": lr_values, "name": "Learning Rate", "line": {"color": "#00CC96"}}],
+                "layout": {
+                    "title": {"text": "Learning Rate Schedule"},
+                    "xaxis": {"title": {"text": "Step"}},
+                    "yaxis": {"title": {"text": "Learning Rate"}},
+                    "margin": {"t": 60, "b": 60},
+                },
+            })
+
+    if charts:
+        with open(os.path.join(output_dir, "charts.json"), "w") as f:
+            json.dump(charts, f)
+
     print(f"\n{'='*50}")
     print(f"Training Complete")
     print(f"{'='*50}")

@@ -116,6 +116,32 @@ def main():
     with open(os.path.join(output_dir, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
 
+    # Generate charts.json for the UI
+    charts = []
+    if summary.get("scores"):
+        task_names = list(summary["scores"].keys())
+        values = [summary["scores"][t]["value"] for t in task_names]
+        metrics = [summary["scores"][t]["metric"] for t in task_names]
+        charts.append({
+            "data": [{
+                "type": "bar",
+                "x": task_names,
+                "y": values,
+                "text": [f"{v:.3f} ({m})" for v, m in zip(values, metrics)],
+                "textposition": "outside",
+                "marker": {"color": "#636EFA"},
+            }],
+            "layout": {
+                "title": {"text": f"Benchmark Scores — {model_id}"},
+                "xaxis": {"title": {"text": "Task"}},
+                "yaxis": {"title": {"text": "Score"}, "range": [0, 1]},
+                "margin": {"t": 60, "b": 80},
+            },
+        })
+    if charts:
+        with open(os.path.join(output_dir, "charts.json"), "w") as f:
+            json.dump(charts, f)
+
     print(f"\nCompleted in {elapsed:.0f}s ({hours:.2f} GPU-hours)")
 
     if result.returncode != 0:
